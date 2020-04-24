@@ -4,6 +4,8 @@
 #include <netinet/in.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/unistd.h>
+#include <signal.h>
 
 void error(char *msg){
   perror(msg);
@@ -32,38 +34,43 @@ int main(int argc, char *argv[]){
   }
   listen(sockfd,5);
   clilen = sizeof(cli_addr);
-
-  while(true){
+  int loop = 1;
+  while(loop == 1){
     newsockfd = accept(sockfd, (struct sockaddr *) &cli_addr, &clilen);
     if(newsockfd < 0){
       error("ERROR on accept");
     }
 
+    //pid_t pid;
     int pid = fork();
-
+    //printf("HELLo, %s\n", getpid());
     if(pid == 0) {
-        n = write(newsockfd, "Use \"kill\" to exit session, \"killserver\" to kill server", 56);
-        n = write(newsockfd, pid, sizeof(pid));
+
+        n = write(newsockfd, "Use \"kill\" to exit session, \"killserver\" to kill server", 62);
+        n = write(newsockfd, &pid, sizeof(pid));
 
         while(strcmp(buffer, "kill\n") != 0 && strcmp(buffer, "killserver\n") != 0 ){
             bzero(buffer, 256);
             n = read(newsockfd,buffer,255);
             if(n < 0) error("ERROR reading from socket");
             printf("Here is the message: %s\n", buffer);
-            n = write(newsockfd, buffer, sizeof(buffer));
+            n = write(newsockfd, buffer, strlen(buffer));
             if(n < 0) error("ERROR writing to socket");
+        }
+        if(strcmp(buffer, "kill\n") == 0) {
+            // look for using getpid
+            printf("killing current fork\n");
+            kill(getpid(), SIGTERM);
+            return 0;
+        }
+        if(strcmp(buffer, "killserver\n") == 0) {
+            // look at least for getppid
+            kill(getppid(), SIGTERM);
+            loop = 0;
         }
     }
 
-    if(strcmp(buffer, "kill\n") == 0) {
-        // look for using getpid
 
-    }
-    if(strcmp(buffer, "killserver\n") == 0) {
-        // look at least for getppid
-    }
-
-    
 
   }
   printf("exiting server\n");

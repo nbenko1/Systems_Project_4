@@ -4,6 +4,8 @@
 #include <netinet/in.h>
 #include <netdb.h>
 #include <stdlib.h>
+#include <string.h>
+#include <sys/unistd.h>
 
 void error(char *msg){
   perror(msg);
@@ -37,29 +39,28 @@ int main(int argc, char *argv[]){
     error("ERROR connecting");
 
 
-  bzero(); // clearing buffer
-  read(sockfd, buffer, 56);
+  bzero(buffer,256); // clearing buffer
+  read(sockfd, buffer, 62);
   printf("%s\n", buffer);
-  bzero(); // clearing buffer
+  bzero(buffer,256); // clearing buffer
   read(sockfd, buffer, sizeof(buffer));
   printf("%s\n", buffer);
+  bzero(buffer,256);
 
   while(strcmp(buffer, "kill\n") != 0 && strcmp(buffer, "killserver\n") != 0) {
     printf("please enter the message: ");
     bzero(buffer,256);
     fgets(buffer,255,stdin);
     n = write(sockfd, buffer, strlen(buffer));
-    if(n < 0)
-      error("ERROR writing to socket");
+    if(n < 0) error("ERROR writing to socket");
     bzero(buffer,256);
     n = read(sockfd, buffer, 255);
     if (n < 0) error ("ERROR reading from socket");
-
     printf("%s\n", buffer);
   }
 
 
-  
+
   return 0;
 
 }
