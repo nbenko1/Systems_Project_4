@@ -47,7 +47,9 @@ int main(int argc, char *argv[]){
     if(pid == 0) {
 
         n = write(newsockfd, "Use \"kill\" to exit session, \"killserver\" to kill server", 62);
-        n = write(newsockfd, &pid, sizeof(pid));
+        char strpid[sizeof(getpid())];
+        sprintf(strpid, "%d", getpid());
+        n = write(newsockfd, strpid, sizeof(getpid()));
 
         while(strcmp(buffer, "kill\n") != 0 && strcmp(buffer, "killserver\n") != 0 ){
             bzero(buffer, 256);
