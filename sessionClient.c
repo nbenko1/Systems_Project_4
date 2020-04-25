@@ -38,25 +38,29 @@ int main(int argc, char *argv[]){
   if(connect(sockfd, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0)
     error("ERROR connecting");
 
+  char id[12];
+  printf("Server session started\n");
 
   bzero(buffer,256); // clearing buffer
-  read(sockfd, buffer, 62);
-  printf("%s\n", buffer);
+  read(sockfd, buffer, 62); //gets server instructions
+  printf("%s\n", buffer); //prints instructions
+
   bzero(buffer,256); // clearing buffer
-  read(sockfd, buffer, sizeof(buffer));
-  printf("%s\n", buffer);
-  bzero(buffer,256);
+  read(sockfd, buffer, sizeof(buffer)); //gets pid of server child
+  strcpy(id, buffer); //saves copy
+  bzero(buffer,256); //clear buffer
+
 
   while(strcmp(buffer, "kill\n") != 0 && strcmp(buffer, "killserver\n") != 0) {
-    printf("please enter the message: ");
-    bzero(buffer,256);
-    fgets(buffer,255,stdin);
-    n = write(sockfd, buffer, strlen(buffer));
+    printf("%s $  ", id); //prompt user for message
+    bzero(buffer,256); //clears
+    fgets(buffer,255,stdin); //reads input
+    n = write(sockfd, buffer, strlen(buffer)); //adds input to buffer
     if(n < 0) error("ERROR writing to socket");
-    bzero(buffer,256);
-    n = read(sockfd, buffer, 255);
+    bzero(buffer,256); //clears buffer
+    n = read(sockfd, buffer, 255); //reads servers response
     if (n < 0) error ("ERROR reading from socket");
-    printf("%s\n", buffer);
+    printf("%s\n", buffer); //prints response
   }
 
 

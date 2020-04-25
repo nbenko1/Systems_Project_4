@@ -41,16 +41,15 @@ int main(int argc, char *argv[]){
       error("ERROR on accept");
     }
 
-    //pid_t pid;
-    int pid = fork();
-    //printf("HELLo, %s\n", getpid());
-    if(pid == 0) {
+    int pid = fork(); //creats fork
 
+    if(pid == 0) { //if the process is a child
         n = write(newsockfd, "Use \"kill\" to exit session, \"killserver\" to kill server", 62);
         char strpid[sizeof(getpid())];
-        sprintf(strpid, "%d", getpid());
-        n = write(newsockfd, strpid, sizeof(getpid()));
+        sprintf(strpid, "%d", getpid()); // casts pid to an int
+        n = write(newsockfd, strpid, sizeof(getpid())); //add pid to buffer
 
+        //main loop that reads input
         while(strcmp(buffer, "kill\n") != 0 && strcmp(buffer, "killserver\n") != 0 ){
             bzero(buffer, 256);
             n = read(newsockfd,buffer,255);
@@ -59,16 +58,15 @@ int main(int argc, char *argv[]){
             n = write(newsockfd, buffer, strlen(buffer));
             if(n < 0) error("ERROR writing to socket");
         }
-        if(strcmp(buffer, "kill\n") == 0) {
-            // look for using getpid
+
+        if(strcmp(buffer, "kill\n") == 0) { //kills child=
             printf("killing current fork\n");
             kill(getpid(), SIGTERM);
             return 0;
         }
-        if(strcmp(buffer, "killserver\n") == 0) {
-            // look at least for getppid
-            kill(getppid(), SIGTERM);
-            loop = 0;
+        if(strcmp(buffer, "killserver\n") == 0) { //kills server
+            kill(getppid(), SIGTERM); //exits parents
+            loop = 0; //
         }
     }
 
