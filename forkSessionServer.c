@@ -41,7 +41,7 @@ int main(int argc, char *argv[]){
       error("ERROR on accept");
     }
 
-    int pid = fork(); //creats fork
+    int pid = fork(); //creates fork
 
     if(pid == 0) { //if the process is a child
         n = write(newsockfd, "Use \"kill\" to exit session, \"killserver\" to kill server", 62);
@@ -54,12 +54,13 @@ int main(int argc, char *argv[]){
             bzero(buffer, 256);
             n = read(newsockfd,buffer,255);
             if(n < 0) error("ERROR reading from socket");
+            // printf("new child with ID: %s\n", strpid); // debugging
             printf("Here is the message: %s\n", buffer);
             n = write(newsockfd, buffer, strlen(buffer));
             if(n < 0) error("ERROR writing to socket");
         }
 
-        if(strcmp(buffer, "kill\n") == 0) { //kills child=
+        if(strcmp(buffer, "kill\n") == 0) { //kills child
             printf("killing current fork\n");
             kill(getpid(), SIGTERM);
             return 0;
@@ -69,9 +70,8 @@ int main(int argc, char *argv[]){
             loop = 0; //
         }
     }
-
-
-
+  } else {
+    wait(NULL);
   }
   printf("exiting server\n");
   return 0;
