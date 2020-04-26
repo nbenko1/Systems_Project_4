@@ -53,11 +53,13 @@ int main(int argc, char *argv[]){
         while(strcmp(buffer, "kill\n") != 0 && strcmp(buffer, "killserver\n") != 0 ){
             bzero(buffer, 256);
             n = read(newsockfd,buffer,255);
-            if(n < 0) error("ERROR reading from socket");
-            // printf("new child with ID: %s\n", strpid); // debugging
-            printf("Here is the message: %s\n", buffer);
-            n = write(newsockfd, buffer, strlen(buffer));
-            if(n < 0) error("ERROR writing to socket");
+            if(strcmp(buffer, "kill\n") != 0 && strcmp(buffer, "killserver\n") != 0) {
+              if(n < 0) error("ERROR reading from socket");
+              // printf("new child with ID: %s\n", strpid); // debugging
+              printf("Here is the message: %s\n", buffer);
+              n = write(newsockfd, buffer, strlen(buffer));
+              if(n < 0) error("ERROR writing to socket");
+            }
         }
 
         if(strcmp(buffer, "kill\n") == 0) { //kills child

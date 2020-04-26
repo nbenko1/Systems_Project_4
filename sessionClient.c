@@ -56,10 +56,12 @@ int main(int argc, char *argv[]){
     bzero(buffer,256); //clears
     fgets(buffer,255,stdin); //reads input
     n = write(sockfd, buffer, strlen(buffer)); //adds input to buffer
-    if(n < 0) error("ERROR writing to socket");
-    bzero(buffer,256); //clears buffer
-    n = read(sockfd, buffer, 255); //reads servers response
-    if (n < 0) error ("ERROR reading from socket");
+    if(strcmp(buffer, "kill\n") != 0 && strcmp(buffer, "killserver\n") != 0) {
+      if(n < 0) error("ERROR writing to socket");
+      bzero(buffer,256); //clears buffer
+      n = read(sockfd, buffer, 255); //reads servers response
+      if (n < 0) error ("ERROR reading from socket");
+    }
     printf("%s\n", buffer); //prints response
   }
 
