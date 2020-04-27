@@ -71,9 +71,9 @@ int main(int argc, char *argv[]){
             kill(getppid(), SIGTERM); //exits parents
             loop = 0; //
         }
+//    } else {
+//    wait(NULL);
     }
-  } else {
-    wait(NULL);
   }
   printf("exiting server\n");
   return 0;
