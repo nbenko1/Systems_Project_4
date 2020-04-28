@@ -8,47 +8,50 @@
 #include <signal.h>
 #include <pthread.h>
 
+int loop = 0;
+
 void error(char *msg){
   perror(msg);
   exit(1);
 }
 
 void * newSession(void * sID) {
-    int newsockfd = (intptr_t) sID;
-    int n;
-    char buffer[256];
-    int tid = pthread_self();
+  int newsockfd = (intptr_t) sID;
+  int n;
+  char buffer[256];
+  long tid = pthread_self();
 
-    printf("\nnew thread with ID: %11d\n", tid);
-    n = write(newsockfd, "Use \"kill\" to exit session, \"killserver\" to kill server", 62);
-    if(n < 0) error("ERROR writing to Client");
+  printf("\nnew thread with ID: %11d\n", tid);
+  n = write(newsockfd, "Use \"kill\" to exit session, \"killserver\" to kill server", 62);
+  if(n < 0) error("ERROR writing to Client");
 
-    bzero(buffer,256);
-    char strpid[sizeof(tid)];
-    n = write(newsockfd, strpid, sizeof(tid)); //add thread id to buffer
-    if(n < 0) error("ERROR writing to Client");
+  bzero(buffer,256);
+  char strpid[sizeof(tid)];
+  sprintf(strpid, "%d", tid);
+  n = write(newsockfd, strpid, sizeof(tid)); //add thread id to buffer
+  if(n < 0) error("ERROR writing to Client");
 
-    //main loop that reads input
-    while(strcmp(buffer, "kill\n") != 0 && strcmp(buffer, "killserver\n") != 0 ){
-        bzero(buffer, 256);
-        n = read(newsockfd,buffer,255);
-        if(strcmp(buffer, "kill\n") != 0 && strcmp(buffer, "killserver\n") != 0) {
-          if(n < 0) error("ERROR reading from socket");
-          // printf("new child with ID: %s\n", strpid); // debugging
-          printf("Here is the message: %s\n", buffer);
-          n = write(newsockfd, buffer, strlen(buffer));
-          if(n < 0) error("ERROR writing to socket");
-        }
-    }
+  //main loop that reads input
+  while(strcmp(buffer, "kill\n") != 0 && strcmp(buffer, "killserver\n") != 0 ){
+      bzero(buffer, 256);
+      n = read(newsockfd,buffer,255);
+      if(strcmp(buffer, "kill\n") != 0 && strcmp(buffer, "killserver\n") != 0) {
+        if(n < 0) error("ERROR reading from socket");
+        // printf("new child with ID: %s\n", strpid); // debugging
+        printf("Here is the message: %s\n", buffer);
+        n = write(newsockfd, buffer, strlen(buffer));
+        if(n < 0) error("ERROR writing to socket");
+      }
+  }
+  printf("exited loop in the thread\n");
 
-    if(strcmp(buffer, "killserver\n") == 0) {
-        printf("kill process");
-        int pid = getpid();
-        kill(pid, SIGKILL);
-    }
-
-
-
+  if(strcmp(buffer, "killserver\n") == 0) {
+      printf("killing server\n");
+      //kill(getpid(), SIGTERM);
+      loop = 1; //ends parent loop
+  }
+  printf("still in the thread before exiting\n");
+  return 0;
 }
 
 int main(int argc, char *argv[]){
@@ -74,16 +77,22 @@ int main(int argc, char *argv[]){
   }
   listen(sockfd,5);
   clilen = sizeof(cli_addr);
-  int loop = 1;
-  while(1 == 1){
+  //loop = 0;
+  pthread_t newThread;
+  //printf("thread id: %s", newThread);
+  while(loop == 0){
     newsockfd = accept(sockfd, (struct sockaddr *) &cli_addr, &clilen);
     if(newsockfd < 0){
       error("ERROR on accept");
     }
 
-    pthread_t newThread; //declare thread
+    //pthread_t newThread; //declare thread
 
     pthread_create(&newThread, NULL, &newSession, (void*) (intptr_t) newsockfd); // create thread
-    }
+    printf("after thread");
+  }
+  printf("exited loop\n");
+  pthread_join(newThread, NULL); //wait for all threads to finish before returning
+  printf("joined threads");
   return 0;
 }
