@@ -1,3 +1,10 @@
+/*
+Systems Project 4: server-client
+4/29/20
+Anna Krolokowski
+Nicholai Benko
+*/
+
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -8,20 +15,21 @@
 #include <signal.h>
 #include <pthread.h>
 
-int loop = 0;
-int numThreads = 0;
+int loop = 0; //if main process should keep looking for clients
+int numThreads = 0; //number of active threads
 
 void error(char *msg){
   perror(msg);
   exit(1);
 }
 
+//this method handles each client
 void * newSession(void * sid) {
   int newsockfd = (intptr_t) sid;
   int n;
   char buffer[256];
-  long tid = pthread_self();
-  numThreads++;
+  long tid = pthread_self(); //current process id
+  numThreads++; //new thread is active
 
   printf("\nnew thread with ID: %d\n", tid);
   n = write(newsockfd, "Use \"kill\" to exit session, \"killserver\" to kill server", 62);
@@ -29,24 +37,23 @@ void * newSession(void * sid) {
 
   bzero(buffer,256);
   char strpid[sizeof(tid)];
-  sprintf(strpid, "%d", tid);
+  sprintf(strpid, "%d", tid); //change tip to string
   n = write(newsockfd, strpid, sizeof(tid)); //add thread id to buffer
   if(n < 0) error("ERROR writing to socket");
 
   //main loop that reads input
   while(strcmp(buffer, "kill\n") != 0 && strcmp(buffer, "killserver\n") != 0 ){
       bzero(buffer, 256);
-      n = read(newsockfd,buffer,255);
+      n = read(newsockfd,buffer,255); //reads buffer
       if(strcmp(buffer, "kill\n") != 0 && strcmp(buffer, "killserver\n") != 0) {
         if(n < 0) error("ERROR reading from socket");
-        // printf("new child with ID: %s\n", strpid); // debugging
         printf("Here is the message: %s\n", buffer);
-        n = write(newsockfd, buffer, strlen(buffer));
+        n = write(newsockfd, buffer, strlen(buffer)); //write to buffer
         if(n < 0) error("ERROR writing to socket");
       }
   }
-  printf("exited loop in the thread\n");
-  numThreads--;
+  printf("exiting thread ID: %s\n", strpid);
+  numThreads--; //kills one thread
 
   if(strcmp(buffer, "killserver\n") == 0) {
       printf("killing server\n");
@@ -56,7 +63,6 @@ void * newSession(void * sid) {
   if(numThreads == 0 && loop == 1) {
       kill(getpid(), SIGTERM); // ends process`
   }
-  printf("still in the thread before exiting\n");
   return 0;
 }
 
@@ -83,22 +89,13 @@ int main(int argc, char *argv[]){
   }
   listen(sockfd,5);
   clilen = sizeof(cli_addr);
-  //loop = 0;
-  pthread_t newThread;
-  //printf("thread id: %s", newThread);
-  while(loop == 0){
-    newsockfd = accept(sockfd, (struct sockaddr *) &cli_addr, &clilen);
+  pthread_t newThread; //declare thread
+  while(loop == 0){ //main process loops until a thread tells it to exit
+    newsockfd = accept(sockfd, (struct sockaddr *) &cli_addr, &clilen); //listen for client connection
     if(newsockfd < 0){
       error("ERROR on accept");
     }
-
-    //pthread_t newThread; //declare thread
-
     pthread_create(&newThread, NULL, &newSession, (void*) (intptr_t) newsockfd); // create thread
-    printf("after thread");
   }
-  printf("exited loop\n");
-  pthread_join(newThread, NULL); //wait for all threads to finish before returning
-  printf("joined threads");
   return 0;
 }

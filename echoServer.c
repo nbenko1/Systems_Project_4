@@ -1,3 +1,9 @@
+/*
+Systems Project 4: server-client
+4/29/20
+Anna Krolokowski
+Nicholai Benko
+*/
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -27,22 +33,22 @@ int main(int argc, char *argv[]){
   serv_addr.sin_family = AF_INET;
   serv_addr.sin_port = htons(portno);
   serv_addr.sin_addr.s_addr = INADDR_ANY;
-  if(bind(sockfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0){ //maybe
+  if(bind(sockfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0){
           error("ERROR on binding");
   }
-  while(strcmp(buffer, "kill\n") != 0 && strcmp(buffer, "killserver\n") != 0 ){
+  while(strcmp(buffer, "kill\n") != 0 && strcmp(buffer, "killserver\n") != 0 ){ //loops until told to quit
     listen(sockfd,5);
     clilen = sizeof(cli_addr);
-    newsockfd = accept(sockfd, (struct sockaddr *) &cli_addr, &clilen);
+    newsockfd = accept(sockfd, (struct sockaddr *) &cli_addr, &clilen); //listens for client
     if(newsockfd < 0){
       error("ERROR on accept");
     }
 
-    bzero(buffer, 256);
-    n = read(newsockfd,buffer,255);
+    bzero(buffer, 256); //clear buffer
+    n = read(newsockfd,buffer,255); //reads from buffer
     if(n < 0) error("ERROR reading from socket");
-    printf("Here is the message: %s\n", buffer);
-    n = write(newsockfd, "I got your message: ", 20);
+    printf("Here is the message: %s\n", buffer); //prints the message from the client
+    n = write(newsockfd, "I got your message: ", 20); //responds to client
     n = write(newsockfd, buffer, 255);
     if(n < 0) error("ERROR writing to socket");
 

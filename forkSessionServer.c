@@ -1,3 +1,9 @@
+/*
+Systems Project 4: server-client
+4/29/20
+Anna Krolokowski
+Nicholai Benko
+*/
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -34,8 +40,8 @@ int main(int argc, char *argv[]){
   }
   listen(sockfd,5);
   clilen = sizeof(cli_addr);
-  int loop = 1;
-  while(loop == 1){
+  int loop = 1; //used to signal looping
+  while(loop == 1){ //loops until "killserver" is sent
     newsockfd = accept(sockfd, (struct sockaddr *) &cli_addr, &clilen);
     if(newsockfd < 0){
       error("ERROR on accept");
@@ -44,35 +50,32 @@ int main(int argc, char *argv[]){
     int pid = fork(); //creates fork
 
     if(pid == 0) { //if the process is a child
-        n = write(newsockfd, "Use \"kill\" to exit session, \"killserver\" to kill server", 62);
-        char strpid[sizeof(getpid())];
-        sprintf(strpid, "%d", getpid()); // casts pid to an int
-        n = write(newsockfd, strpid, sizeof(getpid())); //add pid to buffer
+      n = write(newsockfd, "Use \"kill\" to exit session, \"killserver\" to kill server", 62);
+      char strpid[sizeof(getpid())];
+      sprintf(strpid, "%d", getpid()); // casts pid to an int
+      n = write(newsockfd, strpid, sizeof(getpid())); //add pid to buffer
 
-        //main loop that reads input
-        while(strcmp(buffer, "kill\n") != 0 && strcmp(buffer, "killserver\n") != 0 ){
-            bzero(buffer, 256);
-            n = read(newsockfd,buffer,255);
-            if(strcmp(buffer, "kill\n") != 0 && strcmp(buffer, "killserver\n") != 0) {
-              if(n < 0) error("ERROR reading from socket");
-              // printf("new child with ID: %s\n", strpid); // debugging
-              printf("Here is the message: %s\n", buffer);
-              n = write(newsockfd, buffer, strlen(buffer));
-              if(n < 0) error("ERROR writing to socket");
-            }
-        }
+      //main loop that reads input
+      while(strcmp(buffer, "kill\n") != 0 && strcmp(buffer, "killserver\n") != 0 ){
+          bzero(buffer, 256);
+          n = read(newsockfd,buffer,255);
+          if(strcmp(buffer, "kill\n") != 0 && strcmp(buffer, "killserver\n") != 0) {
+            if(n < 0) error("ERROR reading from socket");
+            printf("Here is the message: %s\n", buffer);
+            n = write(newsockfd, buffer, strlen(buffer));
+            if(n < 0) error("ERROR writing to socket");
+          }
+      }
 
-        if(strcmp(buffer, "kill\n") == 0) { //kills child
-            printf("killing current fork\n");
-            kill(getpid(), SIGTERM);
-            return 0;
-        }
-        if(strcmp(buffer, "killserver\n") == 0) { //kills server
-            kill(getppid(), SIGTERM); //exits parents
-            loop = 0; //
-        }
-//    } else {
-//    wait(NULL);
+      if(strcmp(buffer, "kill\n") == 0) { //kills child
+          printf("killing current fork\n");
+          kill(getpid(), SIGTERM);
+          return 0;
+      }
+      if(strcmp(buffer, "killserver\n") == 0) { //kills server
+          kill(getppid(), SIGTERM); //exits parents
+          loop = 0; //
+      }
     }
   }
   printf("exiting server\n");
