@@ -67,15 +67,17 @@ int main(int argc, char *argv[]){
           }
       }
 
-      if(strcmp(buffer, "kill\n") == 0) { //kills child
-          printf("killing current fork\n");
-          kill(getpid(), SIGTERM);
-          return 0;
-      }
-      if(strcmp(buffer, "killserver\n") == 0) { //kills server
-          kill(getppid(), SIGTERM); //exits parents
-          loop = 0; //
-      }
+        if(strcmp(buffer, "kill\n") == 0) { //kills child
+            printf("killing current fork\n");
+            kill(getpid(), SIGTERM);
+            return 0;
+        }
+        if(strcmp(buffer, "killserver\n") == 0) { //kills server
+            kill(getppid(), SIGTERM); //exits parents
+            loop = 0; //
+        }
+    } else {
+      signal(SIGCHLD,SIG_IGN);
     }
   }
   printf("exiting server\n");
