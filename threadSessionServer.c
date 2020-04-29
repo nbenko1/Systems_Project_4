@@ -60,7 +60,7 @@ void * newSession(void * sid) {
       loop = 1; //ends parent loop
   }
 
-  if(numThreads == 0 && loop == 1) {
+  if(numThreads == 0 && loop == 1) { //if there are no threads, and "killserver" has been called
       kill(getpid(), SIGTERM); // ends process`
   }
   return 0;

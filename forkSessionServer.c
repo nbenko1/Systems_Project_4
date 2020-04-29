@@ -77,7 +77,8 @@ int main(int argc, char *argv[]){
             loop = 0; //
         }
     } else {
-      signal(SIGCHLD,SIG_IGN);
+      //https://www.geeksforgeeks.org/zombie-processes-prevention/
+      signal(SIGCHLD,SIG_IGN); //avoids zombie processes
     }
   }
   printf("exiting server\n");
