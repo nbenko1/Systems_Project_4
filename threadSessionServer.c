@@ -9,27 +9,29 @@
 #include <pthread.h>
 
 int loop = 0;
+int numThreads = 0;
 
 void error(char *msg){
   perror(msg);
   exit(1);
 }
 
-void * newSession(void * sID) {
-  int newsockfd = (intptr_t) sID;
+void * newSession(void * sid) {
+  int newsockfd = (intptr_t) sid;
   int n;
   char buffer[256];
   long tid = pthread_self();
+  numThreads++;
 
-  printf("\nnew thread with ID: %11d\n", tid);
+  printf("\nnew thread with ID: %d\n", tid);
   n = write(newsockfd, "Use \"kill\" to exit session, \"killserver\" to kill server", 62);
-  if(n < 0) error("ERROR writing to Client");
+  if(n < 0) error("ERROR writing to socket");
 
   bzero(buffer,256);
   char strpid[sizeof(tid)];
   sprintf(strpid, "%d", tid);
   n = write(newsockfd, strpid, sizeof(tid)); //add thread id to buffer
-  if(n < 0) error("ERROR writing to Client");
+  if(n < 0) error("ERROR writing to socket");
 
   //main loop that reads input
   while(strcmp(buffer, "kill\n") != 0 && strcmp(buffer, "killserver\n") != 0 ){
@@ -44,11 +46,15 @@ void * newSession(void * sID) {
       }
   }
   printf("exited loop in the thread\n");
+  numThreads--;
 
   if(strcmp(buffer, "killserver\n") == 0) {
       printf("killing server\n");
-      //kill(getpid(), SIGTERM);
       loop = 1; //ends parent loop
+  }
+
+  if(numThreads == 0 && loop == 1) {
+      kill(getpid(), SIGTERM); // ends process`
   }
   printf("still in the thread before exiting\n");
   return 0;
